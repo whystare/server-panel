@@ -1,0 +1,291 @@
+/* Общие стили */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+  color: #222;
+  transition: background 0.5s ease, color 0.5s ease;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 30px 20px;
+}
+
+body.dark-theme {
+  background: linear-gradient(135deg, #1e1e2f, #35354a);
+  color: #ddd;
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  width: 100%;
+  padding: 40px 50px;
+  transition: background 0.5s ease, color 0.5s ease;
+  backdrop-filter: blur(12px);
+}
+
+body.dark-theme .container {
+  background: rgba(30, 30, 47, 0.9);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+h1, h2, h3 {
+  margin-top: 0;
+  font-weight: 700;
+  color: #007CF0;
+  text-align: center;
+}
+
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3 {
+  color: #66aaff;
+}
+
+p {
+  font-size: 1.1rem;
+  margin: 8px 0;
+}
+
+.status-indicator {
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+  font-family: monospace;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+
+.status-indicator.low {
+  background-color: #4caf50;
+}
+
+.status-indicator.medium {
+  background-color: #ff9800;
+}
+
+.status-indicator.high {
+  background-color: #e53935;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  margin-bottom: 24px;
+  font-size: 1rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+thead tr {
+  background-color: #007CF0;
+  color: white;
+  text-align: left;
+}
+
+body.dark-theme thead tr {
+  background-color: #66aaff;
+}
+
+tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+body.dark-theme tbody tr:nth-child(even) {
+  background: #2a2a3f;
+}
+
+tbody tr:hover {
+  background-color: #007CF0aa;
+  color: white;
+  cursor: default;
+}
+
+body.dark-theme tbody tr:hover {
+  background-color: #66aaffcc;
+}
+
+td, th {
+  padding: 12px 16px;
+}
+
+canvas {
+  max-width: 100%;
+  margin: 20px 0 40px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: background 0.5s ease;
+}
+
+body.dark-theme canvas {
+  background: #22223b;
+}
+
+/* Переключатель темы */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  user-select: none;
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 56px;
+  height: 32px;
+}
+
+.theme-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #ccc;
+  border-radius: 32px;
+  transition: background 0.4s ease;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 24px;
+  width: 24px;
+  left: 4px;
+  bottom: 4px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.4s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+input:checked + .slider {
+  background: #007CF0;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.slider .icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  user-select: none;
+  pointer-events: none;
+}
+
+.slider .sun {
+  left: 8px;
+  color: #ffba49;
+}
+
+.slider .moon {
+  right: 8px;
+  color: #f0e68c;
+}
+
+input:checked + .slider .sun {
+  opacity: 0.3;
+}
+
+input:checked + .slider .moon {
+  opacity: 1;
+}
+
+.styled-button {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.styled-button:hover {
+  background-color: var(--button-hover);
+  transform: scale(1.02);
+}
+
+/* Переменные тем */
+:root {
+  --button-bg: #007bff;
+  --button-hover: #0056b3;
+  --button-text: #fff;
+}
+
+body.dark-mode {
+  --button-bg: #444;
+  --button-hover: #666;
+  --button-text: #f0f0f0;
+}
+.logout-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+#connectionsTable {
+  width: 100%;
+  border-collapse: collapse;
+  max-height: 300px;      /* фиксированная высота */
+  overflow-y: auto;       /* вертикальный скролл */
+  display: block;         /* важно, чтобы работал скролл */
+  font-size: 0.85rem;     /* чуть компактнее шрифт */
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+}
+
+#connectionsTable thead, 
+#connectionsTable tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed; /* равные колонки */
+}
+
+#connectionsTable thead {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 600;
+}
+
+#connectionsTable tbody {
+  display: block;
+  max-height: 250px; /* высота области с данными */
+  overflow-y: auto;
+}
+
+#connectionsTable tbody tr:hover {
+  background-color: var(--hover-bg);
+  cursor: pointer;
+}
+
+#connectionsTable th, #connectionsTable td {
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

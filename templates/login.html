@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Вход в панель</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container auth-container">
+    <h1>Добро пожаловать</h1>
+    <p>Пожалуйста, авторизуйтесь для доступа к панели</p>
+
+    <div class="theme-toggle">
+    <label class="theme-switch">
+    <input type="checkbox" id="theme-toggle" />
+        <span class="slider">
+        <span class="icon sun">☀️</span>
+        <span class="icon moon">🌙</span>
+    </span>
+    </label>
+    </div>
+  
+
+    <form method="POST" action="{{ url_for('login') }}" class="login-form">
+      <input type="text" name="username" placeholder="Имя пользователя" required>
+      <input type="password" name="password" placeholder="Пароль" required>
+      <button type="submit">Войти</button>
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="messages">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <script>
+    const toggle = document.getElementById('theme-toggle');
+    const theme = localStorage.getItem('theme');
+
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+      toggle.checked = true;
+    }
+
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+  </script>
+</body>
+</html>

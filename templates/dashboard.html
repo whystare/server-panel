@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Панель управления сервером</title>
+  <link rel="stylesheet" href="static/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="theme-toggle">
+    <label class="theme-switch">
+      <input type="checkbox" id="themeCheckbox" />
+      <span class="slider">
+        <span class="icon sun">☀️</span>
+        <span class="icon moon">🌙</span>
+      </span>
+    </label>
+  </div>
+
+  <div class="container">
+    <h1>Панель управления</h1>
+    <p><strong>Uptime:</strong> <span id="uptime"></span></p>
+    <p><strong>OS:</strong> <span id="os"></span></p>
+    <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+    <p><strong>Пользователи:</strong> <span id="users"></span></p>
+    <p><strong>Процессы:</strong> <span id="processes"></span></p>
+
+    <h2>Сеть</h2>
+<div class="card">
+  <p><strong>Отправлено:</strong> <span id="sent">{{ (info.bytes_sent / 1024 / 1024) | round(2) }} MB</span></p>
+  <p><strong>Получено:</strong> <span id="recv">{{ (info.bytes_recv / 1024 / 1024) | round(2) }} MB</span></p>
+</div>
+
+<h2>Активные сетевые соединения</h2>
+<table id="connectionsTable">
+  <thead>
+    <tr>
+      <th>PID</th>
+      <th>Процесс</th>
+      <th>Локальный адрес</th>
+      <th>Удалённый адрес</th>
+      <th>Статус</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+    <h2>Загрузка ресурсов</h2>
+    <canvas id="cpuChart"></canvas>
+    <canvas id="ramChart"></canvas>
+    <canvas id="diskChart"></canvas>
+
+    <h3>Текущие показатели</h3>
+    <p>CPU: <span id="cpuStatus" class="status-indicator"></span></p>
+    <p>RAM: <span id="ramStatus" class="status-indicator"></span></p>
+    <p>Disk (/): <span id="diskStatus" class="status-indicator"></span></p>
+
+    <h3>Топ 5 процессов по CPU</h3>
+    <table id="topCpuTable">
+      <thead>
+        <tr><th>PID</th><th>Имя процесса</th><th>CPU %</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Топ 5 процессов по памяти</h3>
+    <table id="topMemTable">
+      <thead>
+        <tr><th>PID</th><th>Имя процесса</th><th>Память %</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    const ramCtx = document.getElementById('ramChart').getContext('2d');
+    const diskCtx = document.getElementById('diskChart').getContext('2d');
+
+    const cpuChart = new Chart(cpuCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'CPU %', data: [], borderColor: '#ff6384', backgroundColor: 'rgba(255,99,132,0.2)', fill: true, tension: 0.3 }] },
+      options: { responsive: true, scales: { y: { min: 0, max: 100, ticks: { stepSize: 10 }}}}
+    });
+
+    const ramChart = new Chart(ramCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'RAM %', data: [], borderColor: '#36a2eb', backgroundColor: 'rgba(54,162,235,0.2)', fill: true, tension: 0.3 }] },
+      options: { responsive: true, scales: { y: { min: 0, max: 100, ticks: { stepSize: 10 }}}}
+    });
+
+    const diskChart = new Chart(diskCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Disk %', data: [], borderColor: '#ffce56', backgroundColor: 'rgba(255,206,86,0.2)', fill: true, tension: 0.3 }] },
+      options: { responsive: true, scales: { y: { min: 0, max: 100, ticks: { stepSize: 10 }}}}
+    });
+
+    function updateStatusIndicator(elementId, value) {
+      const el = document.getElementById(elementId);
+      el.textContent = value.toFixed(1) + '%';
+      el.className = 'status-indicator ';
+      if (value < 50) el.classList.add('low');
+      else if (value < 80) el.classList.add('medium');
+      else el.classList.add('high');
+    }
+
+    function updateTables(topCpu, topMem) {
+      const cpuTableBody = document.querySelector('#topCpuTable tbody');
+      const memTableBody = document.querySelector('#topMemTable tbody');
+      cpuTableBody.innerHTML = '';
+      memTableBody.innerHTML = '';
+
+      topCpu.forEach(proc => {
+        const row = `<tr><td>${proc.pid}</td><td>${proc.name}</td><td>${proc.cpu.toFixed(1)}</td></tr>`;
+        cpuTableBody.insertAdjacentHTML('beforeend', row);
+      });
+      topMem.forEach(proc => {
+        const row = `<tr><td>${proc.pid}</td><td>${proc.name}</td><td>${proc.memory.toFixed(1)}</td></tr>`;
+        memTableBody.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    async function fetchMetrics() {
+  try {
+    const res = await fetch('/api/metrics'); // меняй URL на свой API
+    if (!res.ok) throw new Error('Ошибка загрузки данных');
+    const data = await res.json();
+
+    // Обновляем текстовые поля
+    document.getElementById('uptime').textContent = data.uptime;
+    document.getElementById('os').textContent = data.os;
+    document.getElementById('hostname').textContent = data.hostname;
+    document.getElementById('users').textContent = data.users;
+    document.getElementById('processes').textContent = data.processes;
+
+    // Время для графиков (метка на оси X)
+    const timeLabel = new Date().toLocaleTimeString();
+
+    // Ограничиваем длину данных графиков до 20 точек
+    if (cpuChart.data.labels.length > 20) {
+      cpuChart.data.labels.shift();
+      cpuChart.data.datasets[0].data.shift();
+      ramChart.data.labels.shift();
+      ramChart.data.datasets[0].data.shift();
+      diskChart.data.labels.shift();
+      diskChart.data.datasets[0].data.shift();
+    }
+
+    // Добавляем новые данные в графики
+    cpuChart.data.labels.push(timeLabel);
+    cpuChart.data.datasets[0].data.push(data.cpu_percent);
+
+    ramChart.data.labels.push(timeLabel);
+    ramChart.data.datasets[0].data.push(data.ram_percent);
+
+    diskChart.data.labels.push(timeLabel);
+    diskChart.data.datasets[0].data.push(data.disk_percent);
+
+    // Обновляем графики
+    cpuChart.update();
+    ramChart.update();
+    diskChart.update();
+
+    // Обновляем индикаторы статуса
+    updateStatusIndicator('cpuStatus', data.cpu_percent);
+    updateStatusIndicator('ramStatus', data.ram_percent);
+    updateStatusIndicator('diskStatus', data.disk_percent);
+
+    // Обновляем таблицы с процессами
+    updateTables(data.top_cpu, data.top_mem);
+
+  } catch (error) {
+    console.error('Ошибка при обновлении метрик:', error);
+  }
+}
+
+// Запускаем обновление сразу и потом по таймеру
+fetchMetrics();
+setInterval(fetchMetrics, 5000);
+
+
+    // Тема и переключатель
+    const themeCheckbox = document.getElementById('themeCheckbox');
+
+    function setTheme(dark) {
+      if (dark) document.body.classList.add('dark-theme');
+      else document.body.classList.remove('dark-theme');
+      themeCheckbox.checked = dark;
+      localStorage.setItem('darkTheme', dark);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('darkTheme');
+      if (savedTheme !== null) setTheme(savedTheme === 'true');
+      else setTheme(false);
+      fetchMetrics();
+      setInterval(fetchMetrics, 5000);
+    });
+
+    themeCheckbox.addEventListener('change', e => setTheme(e.target.checked));
+  </script>
+  <script>
+  async function updateSystemInfo() {
+    try {
+      const response = await fetch('/api/status');
+      if (!response.ok) throw new Error('Ошибка загрузки данных');
+
+      const data = await response.json();
+
+      if (data.uptime) document.getElementById('uptime').textContent = data.uptime;
+      if (data.os) document.getElementById('os').textContent = data.os;
+      if (data.hostname) document.getElementById('hostname').textContent = data.hostname;
+      if (data.users) document.getElementById('users').textContent = data.users;
+      if (data.processes !== undefined) document.getElementById('processes').textContent = data.processes;
+
+    } catch (error) {
+      console.warn('Ошибка обновления системной информации:', error);
+      // ничего не затираем
+    }
+  }
+
+  updateSystemInfo();
+  setInterval(updateSystemInfo, 5000);
+</script>
+<form action="{{ url_for('logout') }}" method="POST">
+  <button type="submit" class="styled-button"> Выход</button>
+</form>
+
+<script>
+function updateNetInfo() {
+  fetch('/system_info')
+    .then(response => response.json())
+    .then(data => {
+      const sentMB = (data.info.bytes_sent / 1024 / 1024).toFixed(2);
+      const recvMB = (data.info.bytes_recv / 1024 / 1024).toFixed(2);
+      document.getElementById('sent').innerText = sentMB + ' MB';
+      document.getElementById('recv').innerText = recvMB + ' MB';
+    });
+}
+
+setInterval(updateNetInfo, 3000);
+</script>
+
+<script>
+  async function loadConnections() {
+    const res = await fetch('/api/connections');
+    const data = await res.json();
+    const tbody = document.querySelector('#connectionsTable tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(conn => {
+      const row = `<tr>
+        <td>${conn.pid}</td>
+        <td>${conn.name}</td>
+        <td>${conn.laddr}</td>
+        <td>${conn.raddr}</td>
+        <td>${conn.status}</td>
+      </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
+  }
+
+  // Загружаем один раз при открытии страницы
+  loadConnections();
+
+  // И обновляем каждые 10 секунд
+  setInterval(loadConnections, 10000);
+</script>
+
+
+</body>
+</html>
