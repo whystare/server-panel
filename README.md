@@ -29,7 +29,7 @@
 ---
 
 ## 📷 Скриншоты
-Подробности обсуждения доступны в [этом комментарии на GitHub](https://github.com/whystare/server-panel/issues/3#issuecomment-3017027338).
+![Dashboard Preview](https://user-images.githubusercontent.com/405f4621-fa41-4e5f-aabd-69f061c36c0a.png)
 
 ---
 
