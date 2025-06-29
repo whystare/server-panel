@@ -29,8 +29,8 @@
 ---
 
 ## 📷 Скриншоты
+Подробности обсуждения доступны в [этом комментарии на GitHub](https://github.com/whystare/server-panel/issues/3#issuecomment-3017027338).
 
-![Dashboard Preview](https://github.com/whystare/server-panel/issues/1#issue-3186493767)
 ---
 
 ## ⚙️ Установка
